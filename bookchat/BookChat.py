@@ -9,6 +9,14 @@ from langchain_community.vectorstores import FAISS
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_ollama import ChatOllama
 import faiss
+import os
+from langfuse import observe, get_client, propagate_attributes
+from langfuse.langchain import CallbackHandler
+
+# add the keys
+os.environ["LANGFUSE_PUBLIC_KEY"] = ""
+os.environ["LANGFUSE_SECRET_KEY"] = ""
+os.environ["LANGFUSE_BASE_URL"] = "http://localhost:3001"
 
 class BookChat:
     vectorstore = None
@@ -67,17 +75,32 @@ class BookChat:
         return self.agent
 
 
-if __name__ == "__main__":
+@observe
+def process_user_prompt(query: str):
     agent = BookChat().get_agent()
-    query = "As per the document, list some 10 annotations?"
-    for step in agent.stream(
-            {
-                    "messages": [{
-                        "role": "user",
-                        "content": query
-                    }]
-                },
-                stream_mode="values",
+    langfuse = get_client()
+    with propagate_attributes(
+            trace_name="bookchat-traces",
+            session_id="session-1",
+            user_id="user-1",
     ):
-        if not isinstance(step["messages"][-1], ToolMessage):
-            step["messages"][-1].pretty_print()
+        langfuse_handler = CallbackHandler()
+        for step in agent.stream(
+                {
+                        "messages": [{
+                            "role": "user",
+                            "content": query
+                        }]
+                    },
+                    config = {
+                        "callbacks": [langfuse_handler]
+                    },
+                    stream_mode="values",
+        ):
+            if not isinstance(step["messages"][-1], ToolMessage):
+                step["messages"][-1].pretty_print()
+
+
+if __name__ == "__main__":
+    query = "As per the document, list some 8 annotations?"
+    process_user_prompt(query)
