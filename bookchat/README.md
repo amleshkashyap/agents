@@ -43,3 +43,13 @@ As per the document, list some 10 annotations?
 
 {"name": "retrieve_context", "parameters": {"object": "<nil>", "query": {"annotations": ["BOLD", "ITALICS", "UNDERLINE", "STRIKETHROUGH", " superscript", "subscript", "small text", "big text", "code", "link"]}}
 ```
+
+### LangFuse
+  * Outputs
+    - All the steps involved, eg, model call, tool call, context retrieval
+      - eg, start -> model -> tool -> model -> end
+    - Time spent in each of the above steps
+    - Money spent in each of the above steps
+    - Response metadata, eg, completion tokens, prompt tokens, reasoning tokens, temperature
+    - Functional outputs from langfuse
+      - LLM as a judge - provides some kind of score and a comment
